@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HID Global &middot; Access Terminal &amp; Biometric Kiosk</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Inter font for clean enterprise typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-sky-500/30 selection:text-white">
+
+  <!-- Enterprise Header Navigation -->
+  <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="bg-slate-800 border border-slate-700/80 p-2 rounded-xl text-sky-400">
+        <i data-lucide="shield" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-bold tracking-wider text-white text-base font-mono">HID GLOBAL</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-semibold tracking-wide">
+            SIGNO TERMINAL
+          </span>
+        </div>
+        <p class="text-xs text-slate-400">Physical Access Control &middot; Active &amp; Passive Anti-Spoof</p>
+      </div>
+    </div>
+
+    <!-- Navigation Flow Tabs (1. Register -> 2. Kiosk -> 3. My Dashboard) -->
+    <nav class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+      <button id="tab-register" class="tab-btn active flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-sky-600 text-white shadow-sm">
+        <span class="w-4 h-4 rounded-full bg-sky-950 text-sky-300 flex items-center justify-center text-[10px] font-mono">1</span>
+        <span>Register First</span>
+      </button>
+
+      <button id="tab-kiosk" class="tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-slate-200">
+        <span class="w-4 h-4 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono">2</span>
+        <span>Access Kiosk</span>
+      </button>
+
+      <button id="tab-user-dash" class="tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-slate-200">
+        <span class="w-4 h-4 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono">3</span>
+        <span>My Dashboard</span>
+      </button>
+    </nav>
+
+    <!-- Admin Console & System Status -->
+    <div class="flex items-center gap-3">
+      <!-- Admin Portal Trigger Button -->
+      <button id="btn-open-admin" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs text-slate-300 hover:text-white transition-colors">
+        <i data-lucide="lock" class="w-3.5 h-3.5 text-sky-400"></i>
+        <span id="admin-btn-label">Admin Portal</span>
+      </button>
+
+      <!-- System Health Pill -->
+      <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+        <span id="status-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span id="status-text" class="text-slate-300 font-mono text-[11px]">Ready (&le; 2.0s SLA)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Views Container -->
+  <main class="flex-1 py-6 px-4 max-w-6xl mx-auto w-full">
+
+    <!-- STEP 1: ENROLL EMPLOYEE VIEW -->
+    <section id="view-register" class="view-panel max-w-4xl mx-auto">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-7 shadow-xl">
+        <!-- Step Header -->
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+          <div class="flex items-center gap-3">
+            <div class="p-2.5 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
+              <i data-lucide="user-plus" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <span class="text-[11px] font-mono text-sky-400 font-semibold uppercase tracking-wider">Step 1 &middot; Biometric Credential Enrollment</span>
+              <h2 class="text-lg font-bold text-white">Register New Employee</h2>
+            </div>
+          </div>
+
+          <button id="btn-skip-to-scan" class="text-xs text-slate-400 hover:text-sky-400 flex items-center gap-1.5 font-medium transition-colors">
+            <span>Already registered? Go to Kiosk</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <!-- Success Alert -->
+        <div id="reg-success-alert" class="hidden mb-6 p-5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-start gap-4">
+          <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+          <div class="flex-1">
+            <h4 class="font-bold text-emerald-400 text-sm">Biometric Enrollment Successful</h4>
+            <p id="reg-success-text" class="text-xs text-slate-300 mt-1"></p>
+            <div id="reg-success-doors" class="flex flex-wrap gap-1.5 mt-3"></div>
+            <button id="btn-proceed-to-scan" class="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded-lg flex items-center gap-2 transition-colors">
+              <span>Proceed to Access Kiosk</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error Alert -->
+        <div id="reg-error-alert" class="hidden mb-6 p-4 rounded-xl bg-rose-950/30 border border-rose-500/30 flex items-center gap-3 text-xs text-rose-300">
+          <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0 text-rose-400"></i>
+          <span id="reg-error-text"></span>
+        </div>
+
+        <form id="reg-form" class="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div class="md:col-span-5 flex flex-col gap-3">
+            <div class="relative aspect-[4/3] bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex items-center justify-center">
+              <video id="reg-video" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
+              <div class="absolute inset-0 border border-dashed border-slate-600/60 rounded-xl pointer-events-none m-4 flex items-center justify-center">
+                <span class="text-[10px] font-mono uppercase tracking-widest text-slate-400 bg-slate-950/80 px-2 py-0.5 rounded">
+                  Center Face
+                </span>
+              </div>
+            </div>
+            <div class="p-3 bg-slate-950 rounded-lg border border-slate-800/80 text-xs text-slate-400 flex items-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4 text-sky-400 flex-shrink-0"></i>
+              <span>Anti-spoof engine verifies live bona fide presence before enrollment.</span>
+            </div>
+          </div>
+
+          <div class="md:col-span-7 flex flex-col gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-1.5">Full Name</label>
+              <input id="reg-name" type="text" placeholder="e.g. Alex Chen" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-colors">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-1.5">Department</label>
+                <select id="reg-dept" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors">
+                  <option value="Engineering">Engineering</option>
+                  <option value="Security">Security</option>
+                  <option value="Executive">Executive</option>
+                  <option value="Operations">Operations</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-1.5">Employee ID</label>
+                <input id="reg-eid" type="text" placeholder="e.g. HID-10492" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 font-mono transition-colors">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-1.5">4-Digit Security PIN</label>
+              <input id="reg-pin" type="password" maxlength="4" placeholder="••••" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 font-mono tracking-widest transition-colors">
+              <span class="text-[11px] text-slate-500 mt-1 block">Used only if image quality is degraded (e.g., motion blur).</span>
+            </div>
+
+            <button id="btn-reg-submit" type="submit" class="mt-2 py-3 rounded-lg bg-sky-600 hover:bg-sky-500 font-medium text-white text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
+              <i data-lucide="camera" class="w-4 h-4"></i>
+              <span id="reg-submit-text">Capture Photo &amp; Register Biometrics</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- STEP 2: FAST ACCESS KIOSK VIEW -->
+    <section id="view-kiosk" class="view-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <canvas id="kiosk-canvas" class="hidden"></canvas>
+
+      <!-- Video Viewfinder (7 Cols) -->
+      <div class="lg:col-span-7 flex flex-col gap-4">
+        <div class="relative bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden aspect-[4/3] flex items-center justify-center shadow-lg">
+          <video id="kiosk-video" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
+          
+          <div id="camera-fallback" class="hidden absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-6 text-center">
+            <i data-lucide="camera" class="w-10 h-10 text-slate-600 mb-2"></i>
+            <p class="text-sm font-medium text-slate-300">Camera Feed Initializing</p>
+            <p class="text-xs text-slate-500 max-w-sm mt-1">
+              Please grant camera access to begin biometric authentication.
+            </p>
+          </div>
+
+          <!-- Clean Minimalist Hardware Focus Reticle Overlay -->
+          <div class="absolute inset-0 pointer-events-none p-5 flex flex-col justify-between">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-md border border-slate-800 text-xs font-mono text-slate-300">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Active Camera</span>
+              </div>
+              <div class="bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-md border border-slate-800 text-xs font-mono text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="zap" class="w-3.5 h-3.5 text-sky-400"></i>
+                <span id="fast-speed-label">&le; 2.0s SLA</span>
+              </div>
+            </div>
+
+            <!-- Sleek Face Viewfinder Reticle -->
+            <div id="reticle-box" class="self-center relative w-60 h-68 border-2 border-slate-700/60 rounded-2xl flex items-center justify-center transition-all duration-300 bg-slate-950/10">
+              <div class="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-slate-400 rounded-tl-lg"></div>
+              <div class="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-slate-400 rounded-tr-lg"></div>
+              <div class="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-slate-400 rounded-bl-lg"></div>
+              <div class="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-slate-400 rounded-br-lg"></div>
+
+              <span id="reticle-hint" class="text-[11px] text-slate-300 font-mono tracking-wide uppercase bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800">
+                Position Face
+              </span>
+            </div>
+
+            <div class="flex justify-between items-center text-xs font-mono text-slate-400">
+              <span class="bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded border border-slate-800">
+                Passive PAD
+              </span>
+              <span class="bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded border border-slate-800">
+                ArcFace 512D
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scan Controls -->
+        <div class="flex items-center gap-3">
+          <button id="btn-scan" class="flex-1 py-3.5 rounded-xl font-medium text-white text-sm flex items-center justify-center gap-2.5 transition-all bg-sky-600 hover:bg-sky-500 active:scale-[0.99] shadow-sm">
+            <i data-lucide="scan" class="w-4 h-4"></i>
+            <span id="scan-btn-text">Instant Face Scan</span>
+          </button>
+          <button id="btn-auto-scan" class="px-4 py-3.5 rounded-xl border border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-200 text-xs font-medium flex items-center gap-2 transition-all">
+            <span id="auto-scan-dot" class="w-2 h-2 rounded-full bg-slate-600"></span>
+            <span>Auto-Scan</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Decision Status & Turnstile Feedback (5 Cols) -->
+      <div class="lg:col-span-5 flex flex-col gap-4">
+        <!-- Turnstile State Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div id="turnstile-icon-box" class="p-2.5 rounded-lg bg-slate-800 text-slate-400">
+              <i id="turnstile-icon" data-lucide="door-closed" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <p class="text-[11px] text-slate-400 font-mono uppercase tracking-wider">Access Barrier</p>
+              <h4 id="turnstile-label" class="text-sm font-bold font-mono text-slate-300">LOCKED (SECURE)</h4>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-[11px] text-slate-400 font-mono">Response Time</span>
+            <p id="latency-val" class="text-xs font-bold font-mono text-sky-400">-- ms</p>
+          </div>
+        </div>
+
+        <!-- Result Card -->
+        <div id="result-card" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 transition-all min-h-[300px] flex flex-col justify-center">
+          <div id="result-idle" class="text-center py-6">
+            <div class="w-14 h-14 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center mb-3 mx-auto text-slate-400">
+              <i data-lucide="scan-face" class="w-7 h-7"></i>
+            </div>
+            <h4 class="font-bold text-slate-200 text-sm mb-1">Terminal Ready</h4>
+            <p class="text-xs text-slate-400 max-w-xs mx-auto leading-relaxed">
+              Align your face and click <strong class="text-sky-400">Instant Face Scan</strong>. Authenticated users are automatically routed to their dashboard.
+            </p>
+          </div>
+
+          <div id="result-active" class="hidden flex flex-col gap-4">
+            <div class="flex items-center gap-3">
+              <div id="outcome-badge-icon" class="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <i id="outcome-icon" data-lucide="shield-check" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <span class="text-[10px] font-mono font-bold tracking-wider uppercase text-slate-400">Decision</span>
+                <h3 id="outcome-title" class="text-lg font-bold tracking-wide text-emerald-400">ACCESS GRANTED</h3>
+              </div>
+            </div>
+
+            <p id="outcome-reason" class="text-xs text-slate-300 leading-relaxed"></p>
+
+            <!-- Auto-redirect notification banner -->
+            <div id="redirect-banner" class="hidden p-3 rounded-lg bg-sky-950/60 border border-sky-800/80 text-xs text-sky-300 flex items-center justify-between">
+              <span class="flex items-center gap-2">
+                <span class="w-3 h-3 border-2 border-sky-400 border-t-transparent rounded-full animate-spin"></span>
+                <span>Opening your Employee Dashboard...</span>
+              </span>
+              <button id="btn-manual-goto-dash" class="text-white underline font-semibold">View Now</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5 text-xs font-mono">
+              <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                <span class="text-slate-400 block mb-1">Liveness Confidence</span>
+                <span id="gauge-live" class="text-sm font-bold text-emerald-400">95%</span>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                <span class="text-slate-400 block mb-1">Face Match Score</span>
+                <span id="gauge-match" class="text-sm font-bold text-sky-400">0.78</span>
+              </div>
+            </div>
+
+            <div id="spoof-species-pill" class="hidden p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/60 text-xs text-rose-300 flex items-center justify-between">
+              <span>Attack Detected:</span>
+              <span id="spoof-species-name" class="font-bold font-mono uppercase">Screen Replay</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3: EMPLOYEE PERSONAL DASHBOARD -->
+    <section id="view-user-dash" class="view-panel hidden flex flex-col gap-6 max-w-5xl mx-auto">
+      <div id="dash-empty-state" class="text-center py-16 bg-slate-900 border border-slate-800 rounded-2xl p-8">
+        <i data-lucide="user-x" class="w-10 h-10 text-slate-500 mb-3 mx-auto"></i>
+        <h3 class="text-base font-bold text-slate-300">No Active Employee Session</h3>
+        <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-5">
+          Complete a successful face scan at the Kiosk to view your personal access records, past passed/failed attempts, and security logs.
+        </p>
+        <button id="btn-dash-to-scan" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs transition-colors">
+          Go to Access Kiosk
+        </button>
+      </div>
+
+      <div id="dash-content" class="hidden flex flex-col gap-5">
+        <!-- Top Employee Profile Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-xl bg-slate-800 overflow-hidden border border-slate-700 flex-shrink-0">
+              <img id="user-dash-photo" src="" alt="Employee" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 id="user-dash-name" class="text-xl font-bold text-white">Alex Chen</h2>
+                <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800/80">
+                  ACCESS GRANTED
+                </span>
+              </div>
+              <p id="user-dash-dept-eid" class="text-xs text-slate-400 font-mono mt-1">HID-84920 &middot; Engineering Department</p>
+              
+              <!-- Authorized Doors -->
+              <div id="user-dash-doors" class="flex flex-wrap gap-1.5 mt-2.5"></div>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:items-end gap-1.5">
+            <span class="text-[11px] font-mono text-slate-400">Current Check-in</span>
+            <span id="user-dash-checkin-time" class="text-xs font-medium font-mono text-sky-300 bg-slate-950 px-3 py-1 rounded-lg border border-slate-800">
+              Just Now
+            </span>
+            <button id="btn-dash-back-to-kiosk" class="mt-1 px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 hover:text-white transition-colors">
+              Return to Kiosk
+            </button>
+          </div>
+        </div>
+
+        <!-- Personal Access KPIs -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+          <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+            <span class="text-xs text-slate-400 font-mono">My Total Scans</span>
+            <h3 id="user-kpi-total" class="text-xl font-bold text-white mt-1 font-mono">0</h3>
+            <span class="text-[11px] text-slate-500 mt-0.5 block">Lifetime kiosk attempts</span>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+            <span class="text-xs text-slate-400 font-mono">Passed (ALLOW)</span>
+            <h3 id="user-kpi-passed" class="text-xl font-bold text-emerald-400 mt-1 font-mono">0</h3>
+            <span id="user-kpi-pass-pct" class="text-[11px] text-emerald-400 mt-0.5 block">100% pass rate</span>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+            <span class="text-xs text-slate-400 font-mono">Quality Verifications</span>
+            <h3 id="user-kpi-verify" class="text-xl font-bold text-amber-400 mt-1 font-mono">0</h3>
+            <span class="text-[11px] text-slate-400 mt-0.5 block">Blur / Lighting step-up</span>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+            <span class="text-xs text-slate-400 font-mono">Blocked / Denied</span>
+            <h3 id="user-kpi-failed" class="text-xl font-bold text-rose-400 mt-1 font-mono">0</h3>
+            <span class="text-[11px] text-slate-500 mt-0.5 block">Spoofs &amp; unverified</span>
+          </div>
+        </div>
+
+        <!-- Personal Access History Table -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col gap-3.5">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="history" class="w-4 h-4 text-sky-400"></i>
+                <span>My Authentication History</span>
+              </h3>
+              <p class="text-xs text-slate-400">Log of all access events, biometric confidence, and verification decisions</p>
+            </div>
+            <span class="text-xs font-mono text-sky-400 bg-sky-950 px-2 py-0.5 rounded border border-sky-800">
+              Personal Log
+            </span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-slate-950 border-b border-slate-800 text-slate-400">
+                <tr>
+                  <th class="py-2 px-3">Date &amp; Time</th>
+                  <th class="py-2 px-3">Decision</th>
+                  <th class="py-2 px-3">Liveness</th>
+                  <th class="py-2 px-3">Match</th>
+                  <th class="py-2 px-3">Latency</th>
+                  <th class="py-2 px-3">Reason / Details</th>
+                </tr>
+              </thead>
+              <tbody id="user-history-table-body" class="divide-y divide-slate-850"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN ONLY DASHBOARD (Protected by Admin PIN/Password) -->
+    <section id="view-admin" class="view-panel hidden flex flex-col gap-6 max-w-6xl mx-auto">
+      <!-- Admin Header Bar with Logout -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-lg font-bold text-white">System Administrator Console</h2>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">
+                RESTRICTED
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Global biometric audit log, presentation attack monitoring, and ISO/IEC 30107-3 reporting
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="btn-run-benchmark" class="px-3.5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs flex items-center gap-1.5 transition-colors">
+            <i data-lucide="play" class="w-3.5 h-3.5 fill-white"></i>
+            <span id="benchmark-btn-text">Run Attack Benchmark</span>
+          </button>
+
+          <button id="btn-logout-admin" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-xs flex items-center gap-1.5 transition-colors">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span>Lock Admin</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Benchmark Report Output Card -->
+      <div id="benchmark-report-card" class="hidden bg-slate-900 border border-sky-500/40 rounded-2xl p-5 shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+              ISO/IEC 30107-3 Benchmark Evaluation Report
+            </h3>
+            <p class="text-xs text-sky-300">
+              Evaluated across Bona Fide and 4 Presentation Attack species (Printed Photo, Screen, Video, Mask)
+            </p>
+          </div>
+          <button id="btn-close-benchmark" class="text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded bg-slate-800">
+            Dismiss
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <span class="text-[11px] text-slate-400 font-mono">BPCER (False Rejection)</span>
+            <p id="bm-bpcer" class="text-lg font-bold font-mono text-emerald-400">0.0%</p>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <span class="text-[11px] text-slate-400 font-mono">Mean Decision Latency</span>
+            <p id="bm-mean-lat" class="text-lg font-bold font-mono text-sky-400">-- ms</p>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <span class="text-[11px] text-slate-400 font-mono">95th Percentile Latency</span>
+            <p id="bm-p95-lat" class="text-lg font-bold font-mono text-sky-300">-- ms</p>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <span class="text-[11px] text-slate-400 font-mono">&le; 2.0s Compliance</span>
+            <p id="bm-compliant" class="text-lg font-bold font-mono text-emerald-400">PASS (100%)</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400">
+                <th class="py-2 px-3">Attack Scenario</th>
+                <th class="py-2 px-3">Samples</th>
+                <th class="py-2 px-3">APCER (False Acceptance)</th>
+                <th class="py-2 px-3">Detection Rate</th>
+                <th class="py-2 px-3">Avg Latency</th>
+              </tr>
+            </thead>
+            <tbody id="bm-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- KPI Overview Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <span class="text-xs text-slate-400 font-mono">System Total Scans</span>
+          <h3 id="stat-total" class="text-xl font-bold text-white mt-1 font-mono">0</h3>
+          <span id="stat-pass-rate" class="text-[11px] text-emerald-400 mt-0.5 block">Pass rate: 0.0%</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <span class="text-xs text-slate-400 font-mono">ALLOW / VERIFY / DENY</span>
+          <div class="flex items-baseline gap-2 mt-1 font-mono">
+            <span id="stat-allow" class="text-emerald-400 font-bold text-base">0</span>
+            <span class="text-slate-500">/</span>
+            <span id="stat-verify" class="text-amber-400 font-bold text-base">0</span>
+            <span class="text-slate-500">/</span>
+            <span id="stat-deny" class="text-rose-400 font-bold text-base">0</span>
+          </div>
+          <span class="text-[11px] text-slate-400 mt-0.5 block">Tri-state access decisions</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <span class="text-xs text-slate-400 font-mono">Avg Decision Time</span>
+          <h3 id="stat-lat" class="text-xl font-bold text-sky-400 mt-1 font-mono">-- ms</h3>
+          <span class="text-[11px] text-emerald-400 mt-0.5 block">&le; 2000 ms SLA Met</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <span class="text-xs text-slate-400 font-mono">Registered Employees</span>
+          <h3 id="stat-users" class="text-xl font-bold text-white mt-1 font-mono">0</h3>
+          <span class="text-[11px] text-slate-400 mt-0.5 block">Encrypted biometric vault</span>
+        </div>
+      </div>
+
+      <!-- Enrolled Users & Live Global Audit Log -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col gap-3.5">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i data-lucide="users" class="w-4 h-4 text-sky-400"></i>
+            <span>Enrolled Employees</span>
+          </h3>
+          <div id="users-list" class="flex flex-col gap-2 max-h-[460px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <div class="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col gap-3.5">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="clock" class="w-4 h-4 text-sky-400"></i>
+              <span>Global Access Audit Log</span>
+            </h3>
+
+            <div class="flex gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+              <button class="filter-btn active px-2.5 py-1 rounded font-medium bg-sky-600 text-white" data-filter="">All</button>
+              <button class="filter-btn px-2.5 py-1 rounded font-medium text-slate-400 hover:text-slate-200" data-filter="ALLOW">ALLOW</button>
+              <button class="filter-btn px-2.5 py-1 rounded font-medium text-slate-400 hover:text-slate-200" data-filter="REQUEST_VERIFICATION">VERIFY</button>
+              <button class="filter-btn px-2.5 py-1 rounded font-medium text-slate-400 hover:text-slate-200" data-filter="DENY">DENY</button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto max-h-[460px]">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="sticky top-0 bg-slate-900 border-b border-slate-800 text-slate-400">
+                <tr>
+                  <th class="py-2 px-3">Time</th>
+                  <th class="py-2 px-3">Employee</th>
+                  <th class="py-2 px-3">Decision</th>
+                  <th class="py-2 px-3">Live / Match</th>
+                  <th class="py-2 px-3">Latency</th>
+                  <th class="py-2 px-3">Attack / Reason</th>
+                </tr>
+              </thead>
+              <tbody id="logs-table-body" class="divide-y divide-slate-850"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ADMIN AUTH MODAL -->
+  <div id="admin-auth-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
+      <button id="btn-close-admin-auth" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+          <i data-lucide="lock" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Administrator Access</h3>
+          <p class="text-xs text-slate-400">Enter Admin PIN (9999) or Password</p>
+        </div>
+      </div>
+
+      <div id="admin-auth-error" class="hidden p-2.5 rounded-lg bg-rose-950/40 border border-rose-900 text-xs text-rose-300 mb-3 text-center"></div>
+
+      <form id="admin-auth-form" class="flex flex-col gap-3">
+        <input id="admin-pass-input" type="password" placeholder="PIN: 9999 or Password: admin123" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-sky-500 font-mono text-center">
+        
+        <button type="submit" class="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow transition-all">
+          Unlock Admin Console
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Secondary Verification Modal (Used ONLY for Blurry / Low Quality Genuine Captures) -->
+  <div id="verify-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <button id="btn-cancel-verify" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <i data-lucide="alert-circle" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Secondary Verification Challenge</h3>
+          <p class="text-xs text-amber-300">Degraded capture quality &middot; Step-up verification</p>
+        </div>
+      </div>
+
+      <div id="verify-user-hint" class="mb-4 p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs flex justify-between">
+        <span class="text-slate-400">Target Identity:</span>
+        <span id="verify-hint-name" class="text-sky-400 font-medium">Alex Chen (Engineering)</span>
+      </div>
+
+      <!-- Step 1: Blink Challenge -->
+      <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 mb-3.5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-slate-300 flex items-center gap-2">
+            <i data-lucide="eye" class="w-3.5 h-3.5 text-sky-400"></i>
+            Step 1: Active Blink Challenge
+          </span>
+          <span id="blink-count-badge" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+            0 / 2 Blinks
+          </span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div id="blink-progress-bar" class="h-full bg-sky-500 w-0 transition-all duration-300"></div>
+        </div>
+        <p id="blink-hint-text" class="text-[11px] text-slate-400 mt-2">
+          Blinking twice naturally to verify active presence...
+        </p>
+      </div>
+
+      <!-- Step 2: 4-digit PIN -->
+      <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 mb-4">
+        <span class="text-xs font-medium text-slate-300 flex items-center gap-2 mb-2">
+          <i data-lucide="key-round" class="w-3.5 h-3.5 text-sky-400"></i>
+          Step 2: Enter 4-Digit Employee PIN
+        </span>
+
+        <div class="flex justify-center gap-2.5 my-3">
+          <div id="pin-dot-0" class="w-9 h-11 rounded-lg border border-slate-800 bg-slate-900 flex items-center justify-center text-base font-mono font-bold text-slate-600"></div>
+          <div id="pin-dot-1" class="w-9 h-11 rounded-lg border border-slate-800 bg-slate-900 flex items-center justify-center text-base font-mono font-bold text-slate-600"></div>
+          <div id="pin-dot-2" class="w-9 h-11 rounded-lg border border-slate-800 bg-slate-900 flex items-center justify-center text-base font-mono font-bold text-slate-600"></div>
+          <div id="pin-dot-3" class="w-9 h-11 rounded-lg border border-slate-800 bg-slate-900 flex items-center justify-center text-base font-mono font-bold text-slate-600"></div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-1.5 mt-2.5">
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm font-medium text-slate-200 active:scale-95 transition-transform" data-val="1">1</button>
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm font-medium text-slate-200 active:scale-95 transition-transform" data-val="2">2</button>
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm font-medium text-slate-200 active:scale-95 transition-transform" data-val="3">3</button>
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm font-medium text-slate-200 active:scale-95 transition-transform" data-val="4">4</button>
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm font-medium text-slate-200 active:scale-95 transition-transform" data-val="5">5</button>
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm font-medium text-slate-200 active:scale-95 transition-transform" data-val="6">6</button>
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm font-medium text-slate-200 active:scale-95 transition-transform" data-val="7">7</button>
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm font-medium text-slate-200 active:scale-95 transition-transform" data-val="8">8</button>
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm font-medium text-slate-200 active:scale-95 transition-transform" data-val="9">9</button>
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-400 active:scale-95 transition-transform" data-val="C">CLEAR</button>
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm font-medium text-slate-200 active:scale-95 transition-transform" data-val="0">0</button>
+          <button class="keypad-btn py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-400 active:scale-95 transition-transform" data-val="DEL">DEL</button>
+        </div>
+      </div>
+
+      <p id="verify-error-msg" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-900/60 p-2.5 rounded-lg mb-3 text-center"></p>
+
+      <button id="btn-submit-verify" disabled class="w-full py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-white shadow flex items-center justify-center gap-2 text-xs transition-all">
+        <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+        <span>Confirm &amp; Unlock Barrier</span>
+      </button>
+    </div>
+  </div>
+
+  <footer class="border-t border-slate-900 bg-slate-950/80 px-6 py-2.5 text-center text-xs font-mono text-slate-500">
+    HID Global &middot; Signo Biometric Physical Access System &middot; Latency SLA &le; 2.0s
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

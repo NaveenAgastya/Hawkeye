@@ -1,0 +1,41 @@
+{
+  "timestamp": 1794640360.8088212,
+  "bpcer": 0.9,
+  "bona_fide_samples": 10,
+  "attack_scenarios": {
+    "mask": {
+      "n": 10,
+      "apcer": 0.0,
+      "detection_rate": 1.0,
+      "avg_liveness_score": 0.0,
+      "avg_latency_ms": 148.3
+    },
+    "printed_photo": {
+      "n": 10,
+      "apcer": 0.0,
+      "detection_rate": 1.0,
+      "avg_liveness_score": 0.175,
+      "avg_latency_ms": 947.9
+    },
+    "screen_replay": {
+      "n": 10,
+      "apcer": 0.0,
+      "detection_rate": 1.0,
+      "avg_liveness_score": 0.0,
+      "avg_latency_ms": 139.5
+    },
+    "video_replay": {
+      "n": 10,
+      "apcer": 0.0,
+      "detection_rate": 1.0,
+      "avg_liveness_score": 0.115,
+      "avg_latency_ms": 284.5
+    }
+  },
+  "latency": {
+    "mean_ms": 507.4,
+    "p95_ms": 1338.5,
+    "max_allowed_ms": 2000,
+    "compliant": true
+  }
+}
